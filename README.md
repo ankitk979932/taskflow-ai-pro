@@ -1,64 +1,63 @@
 # TaskFlow AI Pro
 
-TaskFlow AI Pro is a full-stack MERN task and project manager with secure authentication, board/task CRUD, drag-and-drop task movement, analytics, activity logging, and a lightweight AI assistant for effort and due-date suggestions.
+TaskFlow AI Pro is a MERN task manager I built for managing boards, tasks, deadlines, and basic project activity in one place. It has login/register, private boards per user, drag-and-drop task movement, analytics, activity history, dark mode, and a small AI suggestion feature for effort and due dates.
 
-## Highlights
+The idea is simple: create a board, add tasks, move them through the workflow, and use the dashboard/analytics pages to see what is pending, completed, overdue, or high priority.
 
-- React 18 + Vite frontend
-- Express + MongoDB backend with MVC structure
-- JWT authentication with bcrypt password hashing
-- Board and task ownership enforced per user
-- Drag and drop task movement
-- Search, filters, overdue detection, and analytics charts
-- AI helper powered by Google Gemini with backend-only API access
-- Dark/light mode and responsive UI
+## Features
+
+- User registration and login with JWT authentication
+- Password hashing with bcrypt
+- Boards and tasks are scoped to the logged-in user
+- Task CRUD with status, priority, due date, and estimated effort
+- Drag-and-drop task movement between columns
+- Search, filtering, overdue task detection, and pagination
+- Dashboard and analytics charts
+- Activity log for important actions
+- Gemini-based AI suggestions with a local fallback
+- Light/dark theme
+- Responsive layout for desktop and mobile
 
 ## Tech Stack
 
-- Frontend: React, React Router DOM, Axios, Tailwind CSS, Recharts, @hello-pangea/dnd, Lucide React
-- Backend: Node.js, Express, MongoDB, Mongoose, JWT, bcryptjs, express-validator, Helmet, CORS, Morgan, express-rate-limit
-- AI: Google Gemini API or local fallback when the key is missing
+- Frontend: React, Vite, React Router, Axios, Tailwind CSS, Recharts, Lucide React
+- Backend: Node.js, Express, MongoDB, Mongoose
+- Auth/Security: JWT, bcryptjs, Helmet, CORS, rate limiting
+- Validation: express-validator
+- Testing: Node test runner, Supertest, mongodb-memory-server
+- AI: Google Gemini API, with fallback logic when no key is available
 
-## Project Structure
+## Folder Structure
 
-- `client/` React app
-- `server/` Express API
-- `server/controllers/` route handlers
-- `server/models/` Mongoose models
-- `server/routes/` API routes
-- `server/middleware/` auth, validation, and error handling
-- `server/services/` token, activity, and AI services
-- `server/validators/` request validation
-- `client/src/components/` shared UI components
-- `client/src/pages/` pages
-- `client/src/layouts/` app shell and auth shell
-- `client/src/context/` auth and theme state
-- `client/src/services/` API client wrappers
-- `client/src/hooks/` reusable hooks
-- `client/src/utils/` constants and formatters
+```text
+client/                 React frontend
+server/                 Express backend
+server/controllers/     API controller logic
+server/models/          Mongoose models
+server/routes/          API routes
+server/middleware/      Auth, validation, and error handling
+server/services/        Token, activity, and AI helper services
+server/tests/           Backend API tests
+screenshots/            Project screenshots
+```
 
 ## Local Setup
 
-### 1. Install dependencies
+Install dependencies:
 
 ```bash
 npm install
 npm run install:all
 ```
 
-### 2. Configure environment variables
-
-Create these files from the included examples:
-
-- `server/.env`
-- `client/.env`
+Create env files:
 
 ```bash
 copy server\.env.example server\.env
 copy client\.env.example client\.env
 ```
 
-Server variables:
+Server `.env`:
 
 ```env
 PORT=5000
@@ -71,151 +70,149 @@ GEMINI_API_KEY=your_gemini_key_here
 GEMINI_MODEL=gemini-1.5-flash
 ```
 
-Client variables:
+Client `.env`:
 
 ```env
 VITE_API_URL=http://localhost:5000/api
 ```
 
-### 3. Start the app
+Start both frontend and backend:
 
 ```bash
 npm run dev
 ```
 
-Frontend:
-- `http://localhost:5173`
+Local URLs:
 
-Backend:
-- `http://localhost:5000`
-
-## AI Feature
-
-The project uses Google Gemini because it has a free tier, simple REST access, and works well for short structured JSON suggestions. The API key stays only in `server/.env`; the browser calls the backend route and never receives the key.
-
-The `POST /api/ai/suggest` route accepts a task title and description. The backend sends that data to Gemini and returns:
-
-```json
-{
-  "effort": 4,
-  "dueDate": "2026-06-28",
-  "difficulty": "Medium",
-  "reasoning": "..."
-}
-```
-
-If `GEMINI_API_KEY` is missing, the request times out, or the provider fails, the app falls back to a local estimate so the product still works during review.
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:5000`
+- Health check: `http://localhost:5000/api/health`
 
 ## Demo Data
 
-After configuring `server/.env`, you can create a demo user, one board, and sample tasks:
+After setting up `server/.env`, run:
 
 ```bash
 npm run seed:demo --prefix server
 ```
 
-Demo credentials:
+Demo login:
 
-- Email: `demo@taskflow.local`
-- Password: `Demo@12345`
+- Email: `ankit@taskflow.local`
+- Password: `Ankit@12345`
 
-## API Documentation
+The seed command creates one demo user, a board, a few tasks in different statuses, and one activity log entry.
 
-### Auth
+## Tests
 
-- `POST /api/auth/register` - register a user
-- `POST /api/auth/login` - login and issue JWT
-- `GET /api/auth/me` - get current user
+Run backend API tests:
 
-### Boards
+```bash
+npm test --prefix server
+```
 
-- `GET /api/boards` - list current user boards
-- `POST /api/boards` - create board
-- `GET /api/boards/:id` - get board details
-- `PUT /api/boards/:id` - update board
-- `DELETE /api/boards/:id` - delete board
+The tests use an in-memory MongoDB instance, so they do not touch the local development database.
 
-### Tasks
+Other useful checks:
 
-- `GET /api/tasks` - list tasks with optional filters
-- `POST /api/tasks` - create task
-- `GET /api/tasks/:id` - get task details
-- `PUT /api/tasks/:id` - update task
-- `DELETE /api/tasks/:id` - delete task
-- `PATCH /api/tasks/:id/move` - move task to another status
+```bash
+npm run check --prefix server
+npm run build --prefix client
+```
 
-### Analytics
+## AI Suggestion Feature
 
-- `GET /api/analytics/summary` - dashboard stats and charts data
+The AI feature is available at:
 
-### Activity
+```text
+POST /api/ai/suggest
+```
 
-- `GET /api/activity` - recent activity logs
+It accepts a task title and description, then returns an estimated effort, difficulty, suggested due date, and a short reason. The Gemini API key stays on the backend only. If the key is missing or the request fails, the server returns a local estimate instead, so the app still works during demo/review.
 
-### AI
+## API Routes
 
-- `POST /api/ai/suggest` - get effort/due-date suggestion
+Auth:
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+
+Boards:
+
+- `GET /api/boards`
+- `POST /api/boards`
+- `GET /api/boards/:id`
+- `PUT /api/boards/:id`
+- `DELETE /api/boards/:id`
+
+Tasks:
+
+- `GET /api/tasks`
+- `POST /api/tasks`
+- `GET /api/tasks/:id`
+- `PUT /api/tasks/:id`
+- `DELETE /api/tasks/:id`
+- `PATCH /api/tasks/:id/move`
+
+Other:
+
+- `GET /api/analytics/summary`
+- `GET /api/activity`
+- `POST /api/ai/suggest`
+- `GET /api/health`
 
 ## Screenshots
 
-- Login page: ![Login page](screenshots/login.png)
-- Dashboard: ![Dashboard](screenshots/dashboard.png)
-- Board view: ![Board view](screenshots/board.png)
-- Mobile view: ![Mobile view](screenshots/mobile.png)
+Login page:
 
-## Live Demo
+![Login page](screenshots/login.png)
 
-Add these after deployment:
+Dashboard:
 
-- Frontend: `https://your-vercel-or-netlify-url`
-- Backend health: `https://your-render-or-railway-url/api/health`
+![Dashboard](screenshots/dashboard.png)
+
+Board view:
+
+![Board view](screenshots/board.png)
+
+Mobile view:
+
+![Mobile view](screenshots/mobile.png)
 
 ## Deployment Notes
 
-Recommended deployment setup:
+Planned deployment setup:
 
 - Frontend: Vercel or Netlify
-- Backend: Render, Railway, or Fly.io
+- Backend: Render
 - Database: MongoDB Atlas
 
-Make sure to update:
+Files already included:
 
-- `CLIENT_URL` on the backend
-- `VITE_API_URL` on the frontend
-- CORS origin list if you use a custom domain
+- `render.yaml` for Render backend deployment
+- `client/vercel.json` for Vercel SPA routing
+- `client/public/_redirects` for Netlify SPA routing
 
-Deployment files included:
+Before deploying, update these values:
 
-- `render.yaml` for the backend API on Render
-- `client/vercel.json` for Vercel SPA rewrites
-- `client/public/_redirects` for Netlify SPA rewrites
+- Backend `CLIENT_URL`
+- Frontend `VITE_API_URL`
+- MongoDB Atlas connection string
+- `JWT_SECRET`
+- Optional `GEMINI_API_KEY`
 
-### Vercel / Netlify Routing
+Live links will be added after deployment:
 
-The repo includes SPA rewrites so direct route refreshes keep working:
+- Frontend: `pending`
+- Backend health: `pending`
 
-- `client/vercel.json`
-- `client/public/_redirects`
+## What Can Be Improved Later
 
-## Known Limitations
-
-- AI suggestions use a fallback when the Gemini key is missing
-- Task ordering is handled by status columns, not persistent manual rank ordering
-- There are no automated tests yet
-- There is no user profile/settings screen yet
-
-## What I Would Improve Next
-
-- Add backend integration tests
-- Add a confirmation modal and toast notifications
-- Add persistent ordering inside each status column
-- Add subtasks/checklists
-- Add board sharing/collaboration
-- Add pagination for large boards and activity logs
-
-## Test Credentials
-
-Use the demo seed command above to create:
-
-- Email: `demo@taskflow.local`
-- Password: `Demo@12345`
+- Confirmation modal before deleting boards/tasks
+- Toast notifications after create/update/delete actions
+- Persistent task ordering inside each column
+- Subtasks or checklists inside a task
+- User profile/settings page
+- Board sharing for multiple users
+- Pagination on activity logs for larger datasets

@@ -9,9 +9,9 @@ const ActivityLog = require("../models/ActivityLog");
 dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
 const demoUser = {
-  name: "Demo User",
-  email: "demo@taskflow.local",
-  password: "Demo@12345"
+  name: "Ankit Gauttam",
+  email: "ankit@taskflow.local",
+  password: "Ankit@12345"
 };
 
 const addDays = (days) => {
