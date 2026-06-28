@@ -27,6 +27,10 @@ const seed = async () => {
   let user = await User.findOne({ email: demoUser.email });
   if (!user) {
     user = await User.create(demoUser);
+  } else {
+    user.name = demoUser.name;
+    user.password = demoUser.password;
+    await user.save();
   }
 
   await Task.deleteMany({ owner: user._id });
