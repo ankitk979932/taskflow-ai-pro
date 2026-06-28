@@ -67,7 +67,9 @@ JWT_SECRET=replace_with_a_strong_secret
 JWT_EXPIRES_IN=7d
 CLIENT_URL=http://localhost:5173
 GEMINI_API_KEY=your_gemini_key_here
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-2.5-flash
+GEMINI_FALLBACK_MODELS=gemini-2.0-flash
+GEMINI_RETRIES=2
 ```
 
 Client `.env`:

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import { ArrowLeft, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
+import ConfirmDialog from "../components/ConfirmDialog";
 import EmptyState from "../components/EmptyState";
 import ErrorAlert from "../components/ErrorAlert";
 import LoadingState from "../components/LoadingState";
@@ -29,6 +30,8 @@ const BoardDetailsPage = () => {
   const [editingBoard, setEditingBoard] = useState(false);
   const [boardForm, setBoardForm] = useState({ title: "", description: "" });
   const [actionError, setActionError] = useState("");
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deletingBoard, setDeletingBoard] = useState(false);
 
   const boardState = useAsync(async () => {
     const board = await boardService.get(boardId);
@@ -90,9 +93,17 @@ const BoardDetailsPage = () => {
   };
 
   const deleteBoard = async () => {
-    if (!window.confirm("Delete this board and all tasks?")) return;
-    await boardService.remove(boardId);
-    navigate("/boards");
+    setDeletingBoard(true);
+    setActionError("");
+    try {
+      await boardService.remove(boardId);
+      navigate("/boards");
+    } catch (err) {
+      setActionError(getErrorMessage(err));
+    } finally {
+      setDeletingBoard(false);
+      setConfirmDeleteOpen(false);
+    }
   };
 
   const updateFilter = (nextFilters) => {
@@ -128,7 +139,7 @@ const BoardDetailsPage = () => {
             {editingBoard ? <X className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
             {editingBoard ? "Cancel" : "Edit"}
           </button>
-          <button className="btn-danger" onClick={deleteBoard}>
+          <button className="btn-danger" onClick={() => setConfirmDeleteOpen(true)}>
             <Trash2 className="h-4 w-4" />
             Delete
           </button>
@@ -251,6 +262,15 @@ const BoardDetailsPage = () => {
           )}
         </div>
       </section>
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Delete board?"
+        description={`This will delete "${boardState.data?.title || "this board"}" and every task in it.`}
+        confirmLabel="Delete board"
+        loading={deletingBoard}
+        onConfirm={deleteBoard}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
     </div>
   );
 };

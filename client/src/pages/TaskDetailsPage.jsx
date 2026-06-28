@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Trash2 } from "lucide-react";
+import ConfirmDialog from "../components/ConfirmDialog";
 import ErrorAlert from "../components/ErrorAlert";
 import LoadingState from "../components/LoadingState";
 import TaskForm from "../components/TaskForm";
@@ -13,6 +14,8 @@ const TaskDetailsPage = () => {
   const { taskId } = useParams();
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const taskState = useAsync(() => taskService.get(taskId), [taskId]);
   const boardsState = useAsync(() => boardService.list(), []);
 
@@ -26,12 +29,16 @@ const TaskDetailsPage = () => {
   };
 
   const deleteTask = async () => {
-    if (!window.confirm("Delete this task?")) return;
+    setDeleting(true);
+    setError("");
     try {
       await taskService.remove(taskId);
       navigate(taskState.data?.board?._id ? `/boards/${taskState.data.board._id}` : "/boards");
     } catch (err) {
       setError(getErrorMessage(err));
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteOpen(false);
     }
   };
 
@@ -47,12 +54,21 @@ const TaskDetailsPage = () => {
           </Link>
           <h1 className="text-2xl font-bold tracking-normal">Task details</h1>
         </div>
-        <button className="btn-danger" onClick={deleteTask}><Trash2 className="h-4 w-4" />Delete</button>
+        <button className="btn-danger" onClick={() => setConfirmDeleteOpen(true)}><Trash2 className="h-4 w-4" />Delete</button>
       </div>
       <ErrorAlert message={taskState.error || boardsState.error || error} />
       <section className="panel">
         <TaskForm boards={boardsState.data || []} initialTask={taskState.data} onSubmit={updateTask} submitLabel="Update task" />
       </section>
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Delete task?"
+        description={`This will permanently delete "${taskState.data?.title || "this task"}".`}
+        confirmLabel="Delete task"
+        loading={deleting}
+        onConfirm={deleteTask}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
     </div>
   );
 };

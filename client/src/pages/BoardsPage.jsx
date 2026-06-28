@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Trash2 } from "lucide-react";
+import ConfirmDialog from "../components/ConfirmDialog";
 import LoadingState from "../components/LoadingState";
 import ErrorAlert from "../components/ErrorAlert";
 import EmptyState from "../components/EmptyState";
@@ -12,12 +13,16 @@ const BoardsPage = () => {
   const { data: boards, setData: setBoards, loading, error } = useAsync(() => boardService.list(), []);
   const [form, setForm] = useState({ title: "", description: "" });
   const [submitError, setSubmitError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
     setSubmitError("");
+    setActionError("");
     try {
       const board = await boardService.create(form);
       setBoards((current) => [board, ...(current || [])]);
@@ -29,10 +34,20 @@ const BoardsPage = () => {
     }
   };
 
-  const removeBoard = async (id) => {
-    if (!window.confirm("Delete this board and its tasks?")) return;
-    await boardService.remove(id);
-    setBoards((current) => current.filter((board) => board._id !== id));
+  const removeBoard = async () => {
+    if (!deleteTarget) return;
+
+    setDeleting(true);
+    setActionError("");
+    try {
+      await boardService.remove(deleteTarget._id);
+      setBoards((current) => current.filter((board) => board._id !== deleteTarget._id));
+      setDeleteTarget(null);
+    } catch (err) {
+      setActionError(getErrorMessage(err));
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (loading) return <LoadingState label="Loading boards" />;
@@ -60,7 +75,7 @@ const BoardsPage = () => {
           <h1 className="text-2xl font-bold tracking-normal">Boards</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Open a board to create, filter, move, and search tasks.</p>
         </div>
-        <ErrorAlert message={error} />
+        <ErrorAlert message={error || actionError} />
         {boards?.length ? (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {boards.map((board) => (
@@ -70,7 +85,7 @@ const BoardsPage = () => {
                     <h2 className="line-clamp-2 font-semibold text-zinc-950 hover:text-emerald-700 dark:text-white dark:hover:text-emerald-300">{board.title}</h2>
                     <p className="mt-2 line-clamp-3 text-sm text-zinc-500 dark:text-zinc-400">{board.description || "No description"}</p>
                   </Link>
-                  <button className="icon-btn h-9 w-9 shrink-0" onClick={() => removeBoard(board._id)} title="Delete board">
+                  <button className="icon-btn h-9 w-9 shrink-0" onClick={() => setDeleteTarget(board)} title="Delete board">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -85,6 +100,15 @@ const BoardsPage = () => {
           <EmptyState title="No boards found" description="Create your first board with the form on the left." />
         )}
       </section>
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete board?"
+        description={`This will delete "${deleteTarget?.title || "this board"}" and all tasks inside it.`}
+        confirmLabel="Delete board"
+        loading={deleting}
+        onConfirm={removeBoard}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };

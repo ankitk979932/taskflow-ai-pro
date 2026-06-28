@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { UserRoundCheck } from "lucide-react";
 import ErrorAlert from "../components/ErrorAlert";
 import { useAuth } from "../context/AuthContext";
 
@@ -9,6 +10,7 @@ const LoginPage = () => {
   const { login, error } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const demoCredentials = { email: "ankit@taskflow.local", password: "Ankit@12345" };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -24,6 +26,10 @@ const LoginPage = () => {
       <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Access your boards and analytics.</p>
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <ErrorAlert message={error} />
+        <button type="button" className="btn-secondary w-full" onClick={() => setForm(demoCredentials)}>
+          <UserRoundCheck className="h-4 w-4" />
+          Use demo login
+        </button>
         <label className="space-y-1">
           <span className="label">Email</span>
           <input className="input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />

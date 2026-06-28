@@ -12,4 +12,21 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const isAuthRoute = error.config?.url?.startsWith("/auth/");
+
+    if (status === 401 && !isAuthRoute) {
+      localStorage.removeItem("taskflow_token");
+      if (!["/login", "/register"].includes(window.location.pathname)) {
+        window.location.assign("/login");
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export default api;
